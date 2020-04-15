@@ -23,7 +23,7 @@ batch_size=config.batches
 PNet=PDetector(P_Net,model_path[0])
 detectors[0]=PNet
 
-
+#判断最后测试选择的网络
 if test_mode in ["RNet", "ONet"]:
 	RNet = Detector(R_Net, 24, batch_size[1], model_path[1])
 	detectors[1] = RNet
@@ -51,31 +51,32 @@ if config.input_mode=='1':
 			score=boxes_c[i,4]
 			corpbbox = [int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])]
 			#画人脸框
-			cv2.rectangle(img, (corpbbox[0], corpbbox[1]),
-						  (corpbbox[2], corpbbox[3]), (255, 0, 0), 1)
+			cv2.rectangle(img, (corpbbox[0], corpbbox[1]),(corpbbox[2], corpbbox[3]), (255, 0, 0), 1)
 			#判别为人脸的置信度
-			cv2.putText(img, '{:.2f}'.format(score), 
-					   (corpbbox[0], corpbbox[1] - 2), 
-						cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0, 0, 255), 2)
+			cv2.putText(img, '{:.2f}'.format(score), (corpbbox[0], corpbbox[1] - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.5,(0, 0, 255), 2)
 		#画关键点
 		for i in range(landmarks.shape[0]):
 			for j in range(len(landmarks[i])//2):
 				cv2.circle(img, (int(landmarks[i][2*j]),int(int(landmarks[i][2*j+1]))), 2, (0,0,255))   
 		cv2.imshow('im',img)
+		#等待用户按下ESC保存图像
 		k = cv2.waitKey(0) & 0xFF
 		if k == 27:        
 			cv2.imwrite(out_path + item,img)
 	cv2.destroyAllWindows()
 
 if config.input_mode=='2':
+	#开启摄像头，视频作图片流处理，并输出视频
 	cap=cv2.VideoCapture(0)
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')
 	out = cv2.VideoWriter(out_path+'out.mp4' ,fourcc,10,(640,480))
 	while True:
 			t1=cv2.getTickCount()
+			#ret表示有没有读取到图片，frame为截取的一帧图片
 			ret,frame = cap.read()
 			if ret == True:
 				boxes_c,landmarks = mtcnn_detector.detect(frame)
+				#通过周期数和频率计算fps
 				t2=cv2.getTickCount()
 				t=(t2-t1)/cv2.getTickFrequency()
 				fps=1.0/t
@@ -83,18 +84,12 @@ if config.input_mode=='2':
 					bbox = boxes_c[i, :4]
 					score = boxes_c[i, 4]
 					corpbbox = [int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])]
-				
 					#画人脸框
-					cv2.rectangle(frame, (corpbbox[0], corpbbox[1]),
-						  (corpbbox[2], corpbbox[3]), (255, 0, 0), 1)
+					cv2.rectangle(frame, (corpbbox[0], corpbbox[1]),(corpbbox[2], corpbbox[3]), (255, 0, 0), 1)
 					#画置信度
-					cv2.putText(frame, '{:.2f}'.format(score), 
-								(corpbbox[0], corpbbox[1] - 2), 
-								cv2.FONT_HERSHEY_SIMPLEX,
-								0.5,(0, 0, 255), 2)
+					cv2.putText(frame, '{:.2f}'.format(score), (corpbbox[0], corpbbox[1] - 2), cv2.FONT_HERSHEY_SIMPLEX,0.5,(0, 0, 255), 2)
 					#画fps值
-				cv2.putText(frame, '{:.4f}'.format(t) + " " + '{:.3f}'.format(fps), (10, 20),
-							cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
+				cv2.putText(frame, '{:.4f}'.format(t) + " " + '{:.3f}'.format(fps), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
 				#画关键点
 				for i in range(landmarks.shape[0]):
 					for j in range(len(landmarks[i])//2):
